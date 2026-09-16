@@ -39,8 +39,18 @@ for (const width of WIDTHS) {
   const page = await context.newPage();
 
   for (const route of ROUTES) {
-    await page.goto(`${BASE}${route}`, { waitUntil: "networkidle", timeout: 60_000 });
+    const response = await page.goto(`${BASE}${route}`, {
+      waitUntil: "networkidle",
+      timeout: 60_000,
+    });
     await page.waitForTimeout(250);
+
+    const status = response?.status() ?? 0;
+    if (status !== 200) {
+      console.log(`${String(width).padStart(4)}px  HTTP ${status}   ${route}`);
+      problems.push({ width, route, status });
+      continue;
+    }
 
     const result = await page.evaluate(() => {
       const doc = document.documentElement;
@@ -94,4 +104,16 @@ for (const width of WIDTHS) {
 }
 
 await browser.close();
-console.log(`\n${problems.length === 0 ? "PASS — no horizontal overflow anywhere" : `FAIL — ${problems.length} overflowing view(s)`}`);
+
+const broken = problems.filter((entry) => entry.status !== undefined);
+const overflowing = problems.filter((entry) => entry.status === undefined);
+
+if (problems.length === 0) {
+  console.log("\nPASS — every route returned 200 with no horizontal overflow");
+} else {
+  console.log(
+    `\nFAIL — ${broken.length} non-200 response(s), ${overflowing.length} overflowing view(s)`,
+  );
+}
+
+process.exitCode = problems.length === 0 ? 0 : 1;
