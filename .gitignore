@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+next-env.d.ts
+*.tsbuildinfo
+.env.local
+.vercel
+
+# data/ and public/audio/ are produced by `npm run sync:bundle` and are meant to
+# be committed — they are what the deployment serves.
+.data

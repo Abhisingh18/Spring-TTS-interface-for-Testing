@@ -1,0 +1,813 @@
+// Speech Evaluation Studio — data model.
+//
+// Design rules this schema enforces:
+//   * Every entity is addressed by a stable cuid, never by a filename.
+//   * Audio bytes live in object storage; only metadata lives here.
+//   * Models, datasets and rubrics are versioned, and evaluations reference the
+//     exact version, so a result can always be traced back to what produced it.
+//   * Completed experiments are immutable: changes create a new experiment.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------- identity --
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+  DISABLED
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  avatarUrl    String?
+  status       UserStatus @default(INVITED)
+  passwordHash String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  lastLoginAt  DateTime?
+
+  roles              UserRole[]
+  ownedProjects      Project[]             @relation("ProjectOwner")
+  createdExperiments Experiment[]          @relation("ExperimentCreator")
+  createdModels      Model[]               @relation("ModelCreator")
+  createdVersions    ModelVersion[]        @relation("ModelVersionCreator")
+  createdDatasets    Dataset[]             @relation("DatasetCreator")
+  assignments        ExperimentEvaluator[]
+  sessions           EvaluationSession[]
+  comments           Comment[]
+  annotations        Annotation[]
+  auditLogs          AuditLog[]
+  exports            Export[]
+  notifications      Notification[]
+  uploadedAssets     AudioAsset[]          @relation("AssetUploader")
+
+  @@index([status])
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  key         String   @unique // ADMIN | RESEARCHER | EVALUATOR | VIEWER
+  name        String
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String  @id @default(cuid())
+  key         String  @unique // e.g. "experiment:publish"
+  resource    String
+  action      String
+  description String?
+
+  roles RolePermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  id         String   @id @default(cuid())
+  userId     String
+  roleId     String
+  /// The project this grant is scoped to, when it is project-scoped.
+  projectId  String?
+  /// Mirrors projectId, or the literal "ORG" for an organization-wide grant.
+  /// A non-null scope is what makes the uniqueness below actually hold —
+  /// Postgres treats NULLs as distinct, so a nullable column could not.
+  scopeId    String   @default("ORG")
+  assignedAt DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role    Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId, scopeId])
+  @@index([userId])
+  @@index([projectId])
+  @@map("user_roles")
+}
+
+// ---------------------------------------------------------------- workspace --
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum SpeechTask {
+  ASR
+  TTS
+  VC
+  S2ST
+  SPEECH_ENHANCEMENT
+  SPEECH_CLASSIFICATION
+  SPEECH_REPRESENTATION
+  OTHER
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  description String?
+  task        SpeechTask    @default(OTHER)
+  status      ProjectStatus @default(ACTIVE)
+  ownerId     String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  owner       User         @relation("ProjectOwner", fields: [ownerId], references: [id])
+  experiments Experiment[]
+  datasets    Dataset[]
+  models      Model[]
+  userRoles   UserRole[]
+
+  @@index([status])
+  @@index([ownerId])
+  @@map("projects")
+}
+
+// ------------------------------------------------------------------ models --
+
+enum ModelStatus {
+  ACTIVE
+  ARCHIVED
+  DEPRECATED
+}
+
+model Model {
+  id             String      @id @default(cuid())
+  projectId      String?
+  slug           String      @unique
+  name           String
+  displayName    String
+  description    String?
+  task           SpeechTask
+  architecture   String?
+  organization   String?
+  paperUrl       String?
+  githubUrl      String?
+  huggingfaceUrl String?
+  status         ModelStatus @default(ACTIVE)
+  createdById    String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  project     Project?          @relation(fields: [projectId], references: [id])
+  createdBy   User              @relation("ModelCreator", fields: [createdById], references: [id])
+  versions    ModelVersion[]
+  experiments ExperimentModel[]
+
+  @@index([task])
+  @@index([status])
+  @@index([projectId])
+  @@map("models")
+}
+
+model ModelVersion {
+  id              String   @id @default(cuid())
+  modelId         String
+  version         String
+  checkpointPath  String?
+  configuration   Json?
+  commitHash      String?
+  trainingDataset String?
+  trainingSteps   Int?
+  parameters      BigInt?
+  precision       String?
+  notes           String?
+  createdById     String
+  createdAt       DateTime @default(now())
+
+  model       Model             @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  createdBy   User              @relation("ModelVersionCreator", fields: [createdById], references: [id])
+  samples     Sample[]
+  experiments ExperimentModel[]
+
+  /// A version string is written once per model and never overwritten.
+  @@unique([modelId, version])
+  @@index([modelId])
+  @@map("model_versions")
+}
+
+// ---------------------------------------------------------------- datasets --
+
+model Dataset {
+  id          String     @id @default(cuid())
+  projectId   String?
+  slug        String     @unique
+  name        String
+  description String?
+  task        SpeechTask
+  language    String?
+  license     String?
+  source      String?
+  paperUrl    String?
+  createdById String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  project     Project?            @relation(fields: [projectId], references: [id])
+  createdBy   User                @relation("DatasetCreator", fields: [createdById], references: [id])
+  versions    DatasetVersion[]
+  experiments ExperimentDataset[]
+
+  @@index([task])
+  @@index([projectId])
+  @@map("datasets")
+}
+
+model DatasetVersion {
+  id           String    @id @default(cuid())
+  datasetId    String
+  version      String
+  sampleCount  Int       @default(0)
+  speakerCount Int       @default(0)
+  durationSec  Float     @default(0)
+  sampleRate   Int?
+  notes        String?
+  /// Frozen versions reject any further sample writes.
+  frozenAt     DateTime?
+  createdAt    DateTime  @default(now())
+
+  dataset     Dataset             @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  samples     Sample[]
+  experiments ExperimentDataset[]
+
+  @@unique([datasetId, version])
+  @@index([datasetId])
+  @@map("dataset_versions")
+}
+
+// ------------------------------------------------------------- experiments --
+
+enum ExperimentStatus {
+  DRAFT
+  PREPARING
+  READY
+  RUNNING
+  COMPLETED
+  ARCHIVED
+}
+
+model Experiment {
+  id          String           @id @default(cuid())
+  projectId   String
+  slug        String           @unique
+  name        String
+  description String?
+  task        SpeechTask
+  status      ExperimentStatus @default(DRAFT)
+  /// Bumped when a completed experiment is forked rather than edited.
+  version     Int              @default(1)
+  parentId    String?
+
+  rubricVersionId   String?
+  /// Base seed; each session derives its own order from seed + sessionId.
+  randomizationSeed String?
+  blindEvaluation   Boolean @default(true)
+  configuration     Json?
+  /// Frozen copy of every version id involved, written at publish time.
+  provenance        Json?
+
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+  completedAt DateTime?
+
+  project       Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy     User                  @relation("ExperimentCreator", fields: [createdById], references: [id])
+  parent        Experiment?           @relation("ExperimentLineage", fields: [parentId], references: [id])
+  forks         Experiment[]          @relation("ExperimentLineage")
+  rubricVersion RubricVersion?        @relation(fields: [rubricVersionId], references: [id])
+  models        ExperimentModel[]
+  datasets      ExperimentDataset[]
+  evaluators    ExperimentEvaluator[]
+  samples       Sample[]
+  sessions      EvaluationSession[]
+  exports       Export[]
+
+  @@index([projectId])
+  @@index([status])
+  @@index([task])
+  @@map("experiments")
+}
+
+model ExperimentModel {
+  experimentId   String
+  modelVersionId String
+  /// Stable per-experiment label the blind engine maps letters onto.
+  position       Int
+  modelId        String
+
+  experiment   Experiment   @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  modelVersion ModelVersion @relation(fields: [modelVersionId], references: [id])
+  model        Model        @relation(fields: [modelId], references: [id])
+
+  @@id([experimentId, modelVersionId])
+  @@index([experimentId])
+  @@map("experiment_models")
+}
+
+model ExperimentDataset {
+  experimentId     String
+  datasetVersionId String
+  datasetId        String
+
+  experiment     Experiment     @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  datasetVersion DatasetVersion @relation(fields: [datasetVersionId], references: [id])
+  dataset        Dataset        @relation(fields: [datasetId], references: [id])
+
+  @@id([experimentId, datasetVersionId])
+  @@index([experimentId])
+  @@map("experiment_datasets")
+}
+
+// ------------------------------------------------------------ audio assets --
+
+enum AssetStatus {
+  UPLOADING
+  PROCESSING
+  READY
+  FAILED
+  QUARANTINED
+}
+
+model AudioAsset {
+  id        String      @id @default(cuid())
+  bucket    String
+  objectKey String
+  /// Original upload name, kept as metadata only — never used as an identifier.
+  filename  String
+  mimeType  String
+  size      BigInt
+  sha256    String
+  status    AssetStatus @default(UPLOADING)
+
+  durationSec Float?
+  sampleRate  Int?
+  channels    Int?
+  bitDepth    Int?
+  codec       String?
+
+  /// Object key of the precomputed peak file; the browser never decodes WAVs.
+  waveformKey String?
+  features    Json?
+  validation  Json?
+
+  uploadedById String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  uploadedBy         User?    @relation("AssetUploader", fields: [uploadedById], references: [id])
+  sourceOfSamples    Sample[] @relation("SampleSource")
+  referenceOfSamples Sample[] @relation("SampleReference")
+  generatedOfSamples Sample[] @relation("SampleGenerated")
+
+  /// Content-addressed: the same bytes are stored once and reused.
+  @@unique([sha256])
+  @@unique([bucket, objectKey])
+  @@index([status])
+  @@map("audio_assets")
+}
+
+// ----------------------------------------------------------------- samples --
+
+enum SampleStatus {
+  DRAFT
+  READY
+  ARCHIVED
+  FAILED
+}
+
+model Sample {
+  id               String  @id @default(cuid())
+  experimentId     String?
+  datasetVersionId String?
+  modelVersionId   String?
+
+  utteranceId String
+  speakerId   String?
+
+  sourceAudioAssetId    String?
+  referenceAudioAssetId String?
+  generatedAudioAssetId String?
+
+  sourceTranscript    String?
+  referenceTranscript String?
+  generatedTranscript String?
+
+  sourceLanguage String?
+  targetLanguage String?
+  script         String?
+
+  durationSec Float?
+  sampleRate  Int?
+  channels    Int?
+  bitDepth    Int?
+
+  status    SampleStatus @default(DRAFT)
+  metadata  Json?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  experiment     Experiment?     @relation(fields: [experimentId], references: [id])
+  datasetVersion DatasetVersion? @relation(fields: [datasetVersionId], references: [id])
+  modelVersion   ModelVersion?   @relation(fields: [modelVersionId], references: [id])
+  sourceAudio    AudioAsset?     @relation("SampleSource", fields: [sourceAudioAssetId], references: [id])
+  referenceAudio AudioAsset?     @relation("SampleReference", fields: [referenceAudioAssetId], references: [id])
+  generatedAudio AudioAsset?     @relation("SampleGenerated", fields: [generatedAudioAssetId], references: [id])
+
+  trials        EvaluationTrial[]
+  metricResults MetricResult[]
+  annotations   Annotation[]
+
+  @@index([experimentId])
+  @@index([modelVersionId])
+  @@index([datasetVersionId])
+  @@index([speakerId])
+  @@index([sourceLanguage])
+  @@index([status])
+  @@index([createdAt])
+  @@map("samples")
+}
+
+// ----------------------------------------------------------------- rubrics --
+
+enum ScaleType {
+  LIKERT_5
+  LIKERT_7
+  LIKERT_10
+  BINARY
+  PAIRWISE_PREFERENCE
+  CONTINUOUS
+}
+
+model Rubric {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  versions RubricVersion[]
+
+  @@map("evaluation_rubrics")
+}
+
+model RubricVersion {
+  id        String   @id @default(cuid())
+  rubricId  String
+  version   Int
+  notes     String?
+  createdAt DateTime @default(now())
+
+  rubric      Rubric                @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  criteria    EvaluationCriterion[]
+  experiments Experiment[]
+
+  @@unique([rubricId, version])
+  @@map("rubric_versions")
+}
+
+model EvaluationCriterion {
+  id              String    @id @default(cuid())
+  rubricVersionId String
+  key             String
+  name            String
+  description     String?
+  scaleType       ScaleType @default(LIKERT_5)
+  minScore        Float     @default(1)
+  maxScore        Float     @default(5)
+  required        Boolean   @default(true)
+  weight          Float     @default(1)
+  order           Int       @default(0)
+
+  rubricVersion RubricVersion @relation(fields: [rubricVersionId], references: [id], onDelete: Cascade)
+  ratings       Rating[]
+
+  @@unique([rubricVersionId, key])
+  @@index([rubricVersionId])
+  @@map("evaluation_criteria")
+}
+
+// -------------------------------------------------------------- evaluation --
+
+model ExperimentEvaluator {
+  experimentId String
+  userId       String
+  assignedAt   DateTime  @default(now())
+  revokedAt    DateTime?
+  /// Optional cap on how many trials this evaluator is given.
+  trialQuota   Int?
+
+  experiment Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([experimentId, userId])
+  @@index([userId])
+  @@map("experiment_evaluators")
+}
+
+enum SessionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  ABANDONED
+}
+
+model EvaluationSession {
+  id                String        @id @default(cuid())
+  experimentId      String
+  evaluatorId       String
+  status            SessionStatus @default(NOT_STARTED)
+  /// Stored so the exact trial and model order can be reconstructed later.
+  randomizationSeed String
+  trialCount        Int           @default(0)
+  completedCount    Int           @default(0)
+  startedAt         DateTime?
+  completedAt       DateTime?
+  lastActivityAt    DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  experiment Experiment        @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  evaluator  User              @relation(fields: [evaluatorId], references: [id])
+  trials     EvaluationTrial[]
+
+  @@unique([experimentId, evaluatorId])
+  @@index([evaluatorId])
+  @@index([status])
+  @@map("evaluation_sessions")
+}
+
+model EvaluationTrial {
+  id         String @id @default(cuid())
+  sessionId  String
+  sampleId   String
+  /// "A", "B", "C" … resolved server-side; never sent to the evaluator with the
+  /// model identity attached.
+  blindLabel String
+  order      Int
+
+  startedAt   DateTime?
+  completedAt DateTime?
+  listeningMs Int       @default(0)
+  playCount   Int       @default(0)
+  skipped     Boolean   @default(false)
+  /// Locked once submitted; only an admin can reopen.
+  locked      Boolean   @default(false)
+
+  session     EvaluationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sample      Sample            @relation(fields: [sampleId], references: [id])
+  ratings     Rating[]
+  comments    Comment[]
+  annotations Annotation[]
+
+  @@unique([sessionId, sampleId])
+  @@unique([sessionId, order])
+  @@index([sessionId])
+  @@index([sampleId])
+  @@map("evaluation_trials")
+}
+
+model Rating {
+  id          String   @id @default(cuid())
+  trialId     String
+  criterionId String
+  score       Float
+  confidence  Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  trial     EvaluationTrial     @relation(fields: [trialId], references: [id], onDelete: Cascade)
+  criterion EvaluationCriterion @relation(fields: [criterionId], references: [id])
+
+  /// One score per criterion per trial; re-rating updates in place.
+  @@unique([trialId, criterionId])
+  @@index([trialId])
+  @@index([criterionId])
+  @@map("ratings")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  trialId   String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trial  EvaluationTrial @relation(fields: [trialId], references: [id], onDelete: Cascade)
+  author User            @relation(fields: [authorId], references: [id])
+
+  @@index([trialId])
+  @@map("comments")
+}
+
+enum AnnotationSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Annotation {
+  id        String             @id @default(cuid())
+  trialId   String?
+  sampleId  String
+  authorId  String
+  tag       String
+  severity  AnnotationSeverity @default(MEDIUM)
+  note      String?
+  /// Optional region of the clip the annotation refers to.
+  startSec  Float?
+  endSec    Float?
+  createdAt DateTime           @default(now())
+
+  trial  EvaluationTrial? @relation(fields: [trialId], references: [id], onDelete: Cascade)
+  sample Sample           @relation(fields: [sampleId], references: [id], onDelete: Cascade)
+  author User             @relation(fields: [authorId], references: [id])
+
+  @@index([sampleId])
+  @@index([tag])
+  @@index([severity])
+  @@map("annotations")
+}
+
+// ---------------------------------------------------------------- metrics --
+
+enum MetricDirection {
+  HIGHER_IS_BETTER
+  LOWER_IS_BETTER
+}
+
+model MetricDefinition {
+  id             String          @id @default(cuid())
+  key            String
+  name           String
+  description    String?
+  task           SpeechTask?
+  version        Int             @default(1)
+  implementation String?
+  direction      MetricDirection @default(HIGHER_IS_BETTER)
+  unit           String?
+  createdAt      DateTime        @default(now())
+
+  results MetricResult[]
+
+  @@unique([key, version])
+  @@map("metric_definitions")
+}
+
+model MetricResult {
+  id        String   @id @default(cuid())
+  sampleId  String
+  metricId  String
+  value     Float
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  sample Sample           @relation(fields: [sampleId], references: [id], onDelete: Cascade)
+  metric MetricDefinition @relation(fields: [metricId], references: [id])
+
+  @@unique([sampleId, metricId])
+  @@index([metricId])
+  @@map("metric_results")
+}
+
+// -------------------------------------------------------------- operations --
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model ProcessingJob {
+  id          String    @id @default(cuid())
+  queue       String
+  type        String
+  status      JobStatus @default(QUEUED)
+  payload     Json?
+  progress    Int       @default(0)
+  total       Int?
+  attempts    Int       @default(0)
+  error       String?
+  entityType  String?
+  entityId    String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status])
+  @@index([type])
+  @@index([entityId])
+  @@map("processing_jobs")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  timestamp  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+enum ExportFormat {
+  CSV
+  JSON
+  PARQUET
+  ZIP
+  PDF
+}
+
+model Export {
+  id            String       @id @default(cuid())
+  experimentId  String?
+  requestedById String
+  format        ExportFormat
+  scope         String
+  status        JobStatus    @default(QUEUED)
+  objectKey     String?
+  sizeBytes     BigInt?
+  error         String?
+  createdAt     DateTime     @default(now())
+  completedAt   DateTime?
+
+  experiment  Experiment? @relation(fields: [experimentId], references: [id])
+  requestedBy User        @relation(fields: [requestedById], references: [id])
+
+  @@index([experimentId])
+  @@index([status])
+  @@map("exports")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String?
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model SystemSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}

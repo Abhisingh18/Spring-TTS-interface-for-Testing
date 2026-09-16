@@ -1,0 +1,609 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ---- Semantic tokens: light is the base, dark overrides in place. ---- */
+:root {
+  --bg: hsl(220 38% 97.5%);
+  --bg-deep: hsl(220 30% 94%);
+  --bg-glow-a: hsl(199 90% 58% / 0.16);
+  --bg-glow-b: hsl(262 82% 64% / 0.14);
+  --bg-glow-c: hsl(172 76% 50% / 0.1);
+
+  --panel: hsl(0 0% 100% / 0.78);
+  --panel-solid: hsl(0 0% 100%);
+  --panel-raised: hsl(0 0% 100%);
+  --sunken: hsl(218 34% 95.5%);
+
+  --border: hsl(216 28% 88%);
+  --border-strong: hsl(216 22% 76%);
+  --highlight: hsl(0 0% 100% / 0.9);
+
+  --text: hsl(222 38% 12%);
+  --text-muted: hsl(219 15% 40%);
+  --text-faint: hsl(219 12% 55%);
+
+  --accent: hsl(246 72% 55%);
+  --accent-bright: hsl(252 84% 62%);
+  --accent-soft: hsl(246 72% 55% / 0.1);
+  --accent-glow: hsl(246 72% 55% / 0.22);
+  --teal: hsl(174 76% 31%);
+  --teal-soft: hsl(174 76% 31% / 0.1);
+  --amber: hsl(32 92% 42%);
+  --danger: hsl(352 74% 47%);
+
+  --wave-idle: hsl(218 16% 74%);
+
+  /* Model identity palette — light-mode steps. Validated against a white
+     surface with the dataviz palette checker: lightness band, chroma floor,
+     CVD separation, normal-vision floor and contrast all pass. The one
+     deuteranopia pair in the 6–8 band (EZ-VC / Vec2Wav) is legal because every
+     coloured mark in this app sits beside its model name. */
+  --m-yourtts: #af5a1d;
+  --m-seedvc: #2176ca;
+  --m-ezvc: #178b3e;
+  --m-vec2wav: #cb2176;
+  --m-diffhiervc: #807715;
+  --m-knnvc: #9041e0;
+  --m-source: #0f766e;
+  --m-target: #0369a1;
+
+  --shadow-sm: 0 1px 2px hsl(222 38% 12% / 0.05);
+  --shadow: 0 1px 2px hsl(222 38% 12% / 0.05), 0 8px 24px -8px hsl(222 38% 12% / 0.12);
+  --shadow-lg: 0 2px 4px hsl(222 38% 12% / 0.05), 0 20px 48px -12px hsl(222 38% 12% / 0.18);
+
+  --grain-opacity: 0.02;
+}
+
+[data-theme="dark"] {
+  --bg: hsl(228 32% 6.5%);
+  --bg-deep: hsl(228 34% 4.5%);
+  --bg-glow-a: hsl(205 92% 52% / 0.2);
+  --bg-glow-b: hsl(266 84% 60% / 0.18);
+  --bg-glow-c: hsl(170 80% 45% / 0.1);
+
+  --panel: hsl(226 26% 11.5% / 0.72);
+  --panel-solid: hsl(226 26% 11.5%);
+  --panel-raised: hsl(226 24% 14.5%);
+  --sunken: hsl(228 28% 9%);
+
+  --border: hsl(224 20% 20%);
+  --border-strong: hsl(224 17% 32%);
+  --highlight: hsl(220 60% 80% / 0.08);
+
+  --text: hsl(213 36% 96%);
+  --text-muted: hsl(217 16% 71%);
+  --text-faint: hsl(217 13% 55%);
+
+  --accent: hsl(248 96% 77%);
+  --accent-bright: hsl(258 98% 82%);
+  --accent-soft: hsl(248 96% 77% / 0.14);
+  --accent-glow: hsl(248 96% 77% / 0.3);
+  --teal: hsl(170 74% 56%);
+  --teal-soft: hsl(170 74% 56% / 0.14);
+  --amber: hsl(38 96% 64%);
+  --danger: hsl(356 88% 72%);
+
+  --wave-idle: hsl(224 14% 36%);
+
+  /* Dark-mode steps: re-chosen against the panel surface rather than flipped,
+     and all six checks pass there too. */
+  --m-yourtts: #db7124;
+  --m-seedvc: #4b96e2;
+  --m-ezvc: #1caf4d;
+  --m-vec2wav: #e4579d;
+  --m-diffhiervc: #a0951a;
+  --m-knnvc: #ac71e8;
+  --m-source: #2dd4bf;
+  --m-target: #38bdf8;
+
+  --shadow-sm: 0 1px 2px hsl(228 40% 2% / 0.6);
+  --shadow: 0 1px 2px hsl(228 40% 2% / 0.5), 0 10px 30px -10px hsl(228 40% 2% / 0.7);
+  --shadow-lg: 0 2px 6px hsl(228 40% 2% / 0.5), 0 24px 60px -16px hsl(228 40% 2% / 0.8);
+
+  --grain-opacity: 0.035;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-deep: var(--bg-deep);
+  --color-panel: var(--panel);
+  --color-panel-solid: var(--panel-solid);
+  --color-panel-raised: var(--panel-raised);
+  --color-sunken: var(--sunken);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--text);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
+  --color-accent: var(--accent);
+  --color-accent-bright: var(--accent-bright);
+  --color-accent-soft: var(--accent-soft);
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-amber: var(--amber);
+  --color-danger: var(--danger);
+
+  --font-sans: ui-sans-serif, system-ui, "Segoe UI Variable Text", "Segoe UI", Inter, Roboto,
+    sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  --font-arabic: "Noto Naskh Arabic", "Segoe UI", "Times New Roman", serif;
+
+  --animate-fade-up: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 0.4s ease both;
+  --animate-shimmer: shimmer 1.8s linear infinite;
+  --animate-bars: bars 1.1s ease-in-out infinite;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes bars {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
+  scroll-padding-top: 7rem;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100dvh;
+}
+
+/* Ambient glow + a faint grain so large dark areas do not band. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(64rem 34rem at 12% -10%, var(--bg-glow-a), transparent 62%),
+    radial-gradient(52rem 30rem at 95% 2%, var(--bg-glow-b), transparent 58%),
+    radial-gradient(44rem 26rem at 50% 108%, var(--bg-glow-c), transparent 60%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.arabic {
+  font-family: var(--font-arabic);
+  font-size: 1.125rem;
+  line-height: 2.05;
+  unicode-bidi: plaintext;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The surface every card sits on: translucent, blurred, with a lit top edge. */
+.panel {
+  background-color: var(--panel);
+  backdrop-filter: blur(16px) saturate(1.3);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow), inset 0 1px 0 var(--highlight);
+}
+
+.panel-raised {
+  background-color: var(--panel-raised);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 var(--highlight);
+}
+
+/* Cards that respond to the pointer. */
+.lift {
+  transition:
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 var(--highlight);
+  border-color: var(--border-strong);
+}
+
+.gradient-text {
+  background: linear-gradient(100deg, var(--text) 10%, var(--accent-bright) 55%, var(--teal) 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hairline {
+  background-image: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+  height: 1px;
+}
+
+.skeleton {
+  background-image: linear-gradient(
+    90deg,
+    var(--sunken) 25%,
+    var(--border) 50%,
+    var(--sunken) 75%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+/* Range inputs: one consistent look in both themes. */
+input[type="range"] {
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border-strong);
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--panel-solid);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--panel-solid);
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+select,
+input[type="text"],
+input[type="search"],
+input[type="password"],
+textarea {
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+select:focus,
+input[type="text"]:focus,
+input[type="search"]:focus,
+input[type="password"]:focus,
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  outline: none;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+/* Thin, unobtrusive scrollbars in the scrolling strips. */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.thin-scroll::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---- Landing surface -------------------------------------------------------
+   The studio follows the viewer's light/dark choice; the landing is a fixed
+   instrument panel, so it redefines the tokens in its own scope rather than
+   fighting the theme toggle. Warm paper ground, cool periwinkle-to-indigo
+   accent, and the grain that keeps large flat areas from banding. */
+.ses-landing {
+  --bg: #f0f2fa;
+  --bg-deep: #e6eaf7;
+  --panel: rgba(255, 255, 255, 0.72);
+  --panel-solid: #ffffff;
+  --panel-raised: rgba(255, 255, 255, 0.88);
+  --sunken: #eef1fd;
+  --border: rgba(40, 52, 110, 0.12);
+  --border-strong: rgba(40, 52, 110, 0.24);
+  --highlight: rgba(255, 255, 255, 0.95);
+  --text: #14161f;
+  --text-muted: #5a6072;
+  --text-faint: #8b91a3;
+
+  --primary-from: #7a98f8;
+  --primary-to: #3852d7;
+  --accent: #3852d7;
+  --accent-bright: #7a98f8;
+  --accent-soft: color-mix(in oklab, var(--primary-to) 10%, transparent);
+  --accent-glow: color-mix(in oklab, var(--primary-from) 46%, transparent);
+  --teal: #6991c7;
+  --gold: #dad085;
+  --tint-blue: #eef1fd;
+
+  --spotlight: color-mix(in oklab, var(--primary-to) 14%, transparent);
+  --spotlight-radius: 350px;
+  --noise-opacity: 0.04;
+
+  --shadow-sm: 0 1px 2px rgba(36, 32, 26, 0.05);
+  --shadow: 0 1px 2px rgba(36, 32, 26, 0.04), 0 14px 36px -14px rgba(56, 82, 215, 0.22);
+  --shadow-lg: 0 2px 8px rgba(36, 32, 26, 0.05), 0 36px 72px -28px rgba(56, 82, 215, 0.32);
+  --wave-idle: #c3c9e2;
+
+  color: var(--text);
+  background:
+    radial-gradient(54rem 34rem at 50% -8%, #ffffff, transparent 62%),
+    linear-gradient(180deg, #eceffb 0%, #f4f6fc 42%, #ffffff 78%, #f5f7fa 100%);
+}
+
+/* Grain: the reference uses it to stop the warm ground from looking flat. */
+.ses-landing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--noise-opacity);
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+.ses-landing > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Hairline blueprint grid, the visual language of instrument panels. */
+.ses-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(40, 52, 110, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(40, 52, 110, 0.07) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* Hero grid fades out at the edges so the type sits on clean ground. */
+.ses-grid-fade::before {
+  mask-image: radial-gradient(82% 72% at 50% 34%, black 42%, transparent 82%);
+  -webkit-mask-image: radial-gradient(82% 72% at 50% 34%, black 42%, transparent 82%);
+}
+
+/* Pointer spotlight: a section lights up under the cursor. */
+.spotlight {
+  position: relative;
+}
+.spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: radial-gradient(
+    var(--spotlight-radius) circle at var(--mx, 50%) var(--my, 50%),
+    var(--spotlight),
+    transparent 70%
+  );
+}
+.spotlight:hover::before {
+  opacity: 1;
+}
+
+/* Gradient hairline that runs around a card on hover. */
+.gradient-edge {
+  position: relative;
+}
+.gradient-edge::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: linear-gradient(135deg, var(--primary-from), var(--primary-to), transparent 70%);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.gradient-edge:hover::after {
+  opacity: 1;
+}
+
+/* Light sweeping across a glass panel on hover. */
+.sweep {
+  position: relative;
+  overflow: hidden;
+}
+.sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%);
+  background: linear-gradient(100deg, transparent 20%, #eef1fd 48%, transparent 72%);
+  opacity: 0.6;
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.sweep:hover::after {
+  transform: translateX(120%);
+}
+
+.ses-gradient-text {
+  background: linear-gradient(100deg, var(--primary-to) 5%, var(--primary-from) 55%, var(--primary-to) 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes flow-dash {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+/* Deliberately slow, like the reference: ambient, never attention-seeking. */
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+/* ---- Print: the PDF export is this stylesheet plus the browser's Save as PDF,
+   which is the only route that renders Arabic, Devanagari and Latin correctly. ---- */
+@page {
+  size: A4;
+  margin: 14mm;
+}
+
+@media print {
+  .no-print,
+  header,
+  nav {
+    display: none !important;
+  }
+
+  /* Print on white regardless of the theme the screen is using. */
+  :root,
+  [data-theme="dark"] {
+    --bg: #ffffff;
+    --panel: #ffffff;
+    --panel-solid: #ffffff;
+    --panel-raised: #ffffff;
+    --sunken: #f4f6fa;
+    --border: #c9d1de;
+    --border-strong: #9aa6b8;
+    --highlight: transparent;
+    --text: #10151f;
+    --text-muted: #39435a;
+    --text-faint: #5c6880;
+    --accent: #3730a3;
+    --teal: #0f766e;
+    --shadow: none;
+    --shadow-lg: none;
+    --grain-opacity: 0;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  body::before,
+  body::after {
+    display: none !important;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .panel,
+  .panel-raised {
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  table {
+    break-inside: auto;
+  }
+
+  tr,
+  li {
+    break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  a[href]::after {
+    content: "";
+  }
+}
