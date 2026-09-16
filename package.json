@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "sync:bundle": "node scripts/sync-bundle.mjs",
     "check:layout": "node scripts/check-layout.mjs",
-    "check:admin": "node scripts/check-admin-flow.mjs"
+    "check:admin": "node scripts/check-admin-flow.mjs",
+    "check:roles": "node scripts/check-roles.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

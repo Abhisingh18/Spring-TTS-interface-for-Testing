@@ -8,6 +8,7 @@ import { ListenerBadge } from "@/components/SignIn";
 import { branding, splitWordmark } from "@/config/branding";
 import { cx } from "@/lib/format";
 import type { BundleStats } from "@/lib/types";
+import { useAdminStore } from "@/store/admin";
 import { usePaletteStore } from "@/store/palette";
 import { ratedCount, useRatingsStore } from "@/store/ratings";
 
@@ -27,7 +28,8 @@ type IconName =
   | "scores"
   | "everyone"
   | "data"
-  | "workspace";
+  | "workspace"
+  | "dashboard";
 
 interface NavItem {
   href: string;
@@ -37,7 +39,17 @@ interface NavItem {
   prefix?: boolean;
 }
 
-const GROUPS: Array<{ title: string; items: NavItem[] }> = [
+const MEMBER_GROUPS: Array<{ title: string; items: NavItem[] }> = [
+  {
+    title: "Listening",
+    items: [
+      { href: "/dashboard", label: "My dashboard", icon: "dashboard" },
+      { href: "/collections", label: "My files", icon: "collections", prefix: true },
+    ],
+  },
+];
+
+const ADMIN_GROUPS: Array<{ title: string; items: NavItem[] }> = [
   {
     title: "Workspace",
     items: [
@@ -83,6 +95,12 @@ export function StudioShell({
 }) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const admin = useAdminStore((state) => state.admin);
+  const hydrateAdmin = useAdminStore((state) => state.hydrate);
+
+  useEffect(() => {
+    void hydrateAdmin();
+  }, [hydrateAdmin]);
 
   useEffect(() => setDrawerOpen(false), [pathname]);
 
@@ -94,6 +112,7 @@ export function StudioShell({
         pairs={pairs}
         stats={stats}
         pathname={pathname}
+        admin={admin === true}
         drawerOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
       />
@@ -112,15 +131,19 @@ function Sidebar({
   pairs,
   stats,
   pathname,
+  admin,
   drawerOpen,
   onClose,
 }: {
   pairs: NavPair[];
   stats: BundleStats;
   pathname: string;
+  admin: boolean;
   drawerOpen: boolean;
   onClose: () => void;
 }) {
+  // Defaults to the member view, so a member never sees management links flash.
+  const groups = admin ? ADMIN_GROUPS : MEMBER_GROUPS;
   return (
     <>
       {drawerOpen ? (
@@ -156,7 +179,7 @@ function Sidebar({
         </Link>
 
         <nav className="thin-scroll flex-1 overflow-y-auto px-2.5 py-3" aria-label="Studio">
-          {GROUPS.map((group) => (
+          {groups.map((group) => (
             <div key={group.title} className="mb-4">
               <p className="px-2.5 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-faint">
                 {group.title}
@@ -171,7 +194,7 @@ function Sidebar({
             </div>
           ))}
 
-          <PairProgress pairs={pairs} pathname={pathname} />
+          {admin ? <PairProgress pairs={pairs} pathname={pathname} /> : null}
         </nav>
 
         <div className="border-t border-line px-2.5 py-2.5">
@@ -360,6 +383,15 @@ function NavIcon({ name }: { name: IconName }) {
   };
 
   switch (name) {
+    case "dashboard":
+      return (
+        <svg {...common}>
+          <path d="M4 13a8 8 0 0 1 16 0" />
+          <path d="M12 13l4-3.5" strokeLinecap="round" />
+          <circle cx="12" cy="13" r="1.4" />
+          <path d="M4 13v4.5A1.5 1.5 0 0 0 5.5 19h13a1.5 1.5 0 0 0 1.5-1.5V13" />
+        </svg>
+      );
     case "collections":
       return (
         <svg {...common}>

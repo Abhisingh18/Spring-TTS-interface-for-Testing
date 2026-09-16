@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { requireResearcher } from "@/lib/guard";
+
 import { SampleTable } from "@/components/SampleTable";
 import { SectionHeading, StatTile } from "@/components/ui";
 import { formatBytes } from "@/lib/format";
@@ -10,7 +12,11 @@ export const metadata: Metadata = {
   description: "Every clip in the bundle, searchable and playable.",
 };
 
+// Reads the session to keep members out, so it cannot be prerendered.
+export const dynamic = "force-dynamic";
+
 export default async function SamplesPage() {
+  await requireResearcher();
   const samples = await listSamples();
   const models = samples.filter((sample) => sample.role === "model").length;
   const references = samples.length - models;

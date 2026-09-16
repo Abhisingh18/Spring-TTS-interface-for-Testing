@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { requireResearcher } from "@/lib/guard";
+
 import { ClipTable } from "@/components/ClipTable";
 import { SectionHeading, StatTile } from "@/components/ui";
 import { getBundle } from "@/lib/bundle";
@@ -10,7 +12,11 @@ export const metadata: Metadata = {
   description: "Provenance for every clip in the 16 kHz portable listening bundle.",
 };
 
+// Reads the session to keep members out, so it cannot be prerendered.
+export const dynamic = "force-dynamic";
+
 export default async function DataPage() {
+  await requireResearcher();
   const { pairs, stats, meta } = await getBundle();
 
   return (

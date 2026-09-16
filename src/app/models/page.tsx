@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+import { requireResearcher } from "@/lib/guard";
 import Link from "next/link";
 
 import { MiniWave } from "@/components/landing/MiniWave";
@@ -12,7 +14,11 @@ export const metadata: Metadata = {
   description: "Every model in the bundle, with its samples and length behaviour.",
 };
 
+// Reads the session to keep members out, so it cannot be prerendered.
+export const dynamic = "force-dynamic";
+
 export default async function ModelsPage() {
+  await requireResearcher();
   const models = await listModels();
   const totalClips = models.reduce((sum, model) => sum + model.sampleCount, 0);
   const totalSeconds = models.reduce((sum, model) => sum + model.totalSeconds, 0);

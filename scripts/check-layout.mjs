@@ -30,14 +30,23 @@ const ROUTES = process.env.ONLY ? [process.env.ONLY] : [
   "/data",
   "/admin/workspace",
   "/admin/login",
+  "/dashboard",
 ];
 const WIDTHS = process.env.ONLY ? [390] : [390, 768, 1280, 1920];
 
 const browser = await chromium.launch();
 const problems = [];
 
+// Management pages redirect a member away, so measure them as an administrator.
+const auth = await browser.newContext();
+await auth.request.post(`${BASE}/api/admin/login`, {
+  data: { email: "admin@spring.com", password: "spring-admin" },
+});
+const storageState = await auth.storageState();
+await auth.close();
+
 for (const width of WIDTHS) {
-  const context = await browser.newContext({ viewport: { width, height: 900 } });
+  const context = await browser.newContext({ viewport: { width, height: 900 }, storageState });
   const page = await context.newPage();
 
   for (const route of ROUTES) {

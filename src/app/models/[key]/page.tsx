@@ -1,18 +1,14 @@
 import type { Metadata } from "next";
+
+import { requireResearcher } from "@/lib/guard";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ModelSampleList } from "@/components/ModelSampleList";
 import { Badge, StatTile } from "@/components/ui";
-import { getBundle } from "@/lib/bundle";
 import { formatBytes } from "@/lib/format";
 import { getModel } from "@/lib/models";
 import { accentFor } from "@/lib/palette";
-
-export async function generateStaticParams() {
-  const { models } = await getBundle();
-  return models.map((model) => ({ key: model.key }));
-}
 
 export async function generateMetadata({
   params,
@@ -29,6 +25,7 @@ export default async function ModelDetailPage({
 }: {
   params: Promise<{ key: string }>;
 }) {
+  await requireResearcher();
   const { key } = await params;
   const found = await getModel(key);
   if (!found) notFound();

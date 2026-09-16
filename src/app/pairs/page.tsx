@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+import { requireResearcher } from "@/lib/guard";
 import Link from "next/link";
 
 import { Badge, SectionHeading, StatTile } from "@/components/ui";
@@ -11,7 +13,11 @@ export const metadata: Metadata = {
   description: "The ten source–target pairs in the 16 kHz listening bundle.",
 };
 
+// Reads the session to keep members out, so it cannot be prerendered.
+export const dynamic = "force-dynamic";
+
 export default async function PairsIndexPage() {
+  await requireResearcher();
   const { pairs, models, stats, meta } = await getBundle();
   const minutes = Math.round(stats.totalSeconds / 60);
 
