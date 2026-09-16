@@ -23,17 +23,29 @@ const VENDORED_AUDIO_DIR = path.resolve(process.cwd(), "public", "audio");
 
 const DEFAULT_BUNDLE_DIR = path.resolve(process.cwd(), "..", "portable_listening_bundle_16khz");
 
+const MANIFEST = "listening_samples.json";
+
+function holdsBundle(directory: string): boolean {
+  return existsSync(path.join(directory, MANIFEST));
+}
+
 /**
  * Where the bundle JSON is read from, in order of preference:
  * BUNDLE_DIR, the vendored `data/` folder, then the sibling bundle folder.
  * On a host like Vercel only the vendored copy exists, which is the point.
+ *
+ * BUNDLE_DIR only wins if it actually holds the manifest. A developer path that
+ * came along for the ride — Vercel offers to import every key it finds in
+ * .env.example — would otherwise take precedence over the vendored copy and
+ * fail the build on a machine where that drive does not exist.
  */
 export function bundleDir(): string {
   const configured = process.env.BUNDLE_DIR?.trim();
-  if (configured) return path.resolve(configured);
-  if (existsSync(path.join(VENDORED_DATA_DIR, "listening_samples.json"))) {
-    return VENDORED_DATA_DIR;
+  if (configured) {
+    const resolved = path.resolve(configured);
+    if (holdsBundle(resolved)) return resolved;
   }
+  if (holdsBundle(VENDORED_DATA_DIR)) return VENDORED_DATA_DIR;
   return DEFAULT_BUNDLE_DIR;
 }
 
