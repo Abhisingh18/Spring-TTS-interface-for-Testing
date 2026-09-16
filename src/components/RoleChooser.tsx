@@ -12,7 +12,7 @@ import { useListenerStore } from "@/store/listener";
  * a member signs in with a name so their scores can be told apart, and an
  * administrator goes straight through to the management side.
  */
-export function RoleChooser({ firstPairSlug }: { firstPairSlug: string }) {
+export function RoleChooser() {
   const router = useRouter();
   const listener = useListenerStore((state) => state.listener);
   const ready = useListenerStore((state) => state.ready);
@@ -22,7 +22,8 @@ export function RoleChooser({ firstPairSlug }: { firstPairSlug: string }) {
   const error = useListenerStore((state) => state.error);
 
   const [name, setName] = useState("");
-  const studioHref = firstPairSlug ? `/pairs/${firstPairSlug}` : "/pairs";
+  // Members choose a language benchmark first, then work through its pairs.
+  const studioHref = "/collections";
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -45,12 +46,12 @@ export function RoleChooser({ firstPairSlug }: { firstPairSlug: string }) {
 
         <h2 className="mt-4 text-xl font-semibold tracking-tight text-ink">Member</h2>
         <p className="mt-1.5 text-sm leading-relaxed text-muted">
-          Listen to the clips and score them. Add your name so your ratings can be told apart from
-          everyone else&rsquo;s — no password, no email.
+          Pick a language benchmark, listen to the clips and score them. Add your name so your
+          ratings can be told apart from everyone else&rsquo;s — no password, no email.
         </p>
 
         <ul className="mt-4 space-y-1.5">
-          {["Listen and compare models", "Rate naturalness and speaker similarity", "Leave written feedback"].map(
+          {["Choose a language collection", "Listen and compare models", "Rate naturalness and speaker similarity"].map(
             (item) => (
               <li key={item} className="flex items-center gap-2 text-[13px] text-muted">
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="var(--primary-to)" strokeWidth="2" aria-hidden="true">

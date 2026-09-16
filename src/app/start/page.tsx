@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function StartPage() {
-  const { pairs, stats } = await getBundle();
+  const { stats } = await getBundle();
 
   return (
     <div className="mx-auto max-w-4xl py-10 sm:py-16">
@@ -33,7 +33,7 @@ export default async function StartPage() {
       </div>
 
       <div className="mt-9">
-        <RoleChooser firstPairSlug={pairs[0]?.slug ?? ""} />
+        <RoleChooser />
       </div>
     </div>
   );
