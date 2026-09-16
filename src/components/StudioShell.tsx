@@ -26,7 +26,8 @@ type IconName =
   | "blind"
   | "scores"
   | "everyone"
-  | "data";
+  | "data"
+  | "workspace";
 
 interface NavItem {
   href: string;
@@ -59,6 +60,10 @@ const GROUPS: Array<{ title: string; items: NavItem[] }> = [
       { href: "/admin", label: "Everyone's ratings", icon: "everyone" },
       { href: "/data", label: "Bundle data", icon: "data" },
     ],
+  },
+  {
+    title: "Management",
+    items: [{ href: "/admin/workspace", label: "Workspace", icon: "workspace", prefix: true }],
   },
 ];
 
@@ -404,6 +409,12 @@ function NavIcon({ name }: { name: IconName }) {
           <circle cx="9" cy="8" r="3.2" />
           <path d="M3 20a6 6 0 0 1 12 0" />
           <path d="M16 5.5a3.2 3.2 0 0 1 0 5M18 20a6 6 0 0 0-2-4.5" />
+        </svg>
+      );
+    case "workspace":
+      return (
+        <svg {...common}>
+          <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4l2 2.5h9A1.5 1.5 0 0 1 21 10v7.5A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5v-10Z" />
         </svg>
       );
     case "data":

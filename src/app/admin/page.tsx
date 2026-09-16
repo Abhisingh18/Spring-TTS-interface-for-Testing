@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { AdminDashboard } from "@/components/AdminDashboard";
 import { AdminGate } from "@/components/AdminGate";
 import { getBundle } from "@/lib/bundle";
-import { isAdmin } from "@/lib/session";
+import { isAdmin } from "@/lib/admin-auth";
 import { getStore, storeDescription } from "@/lib/storage";
 
 export const metadata: Metadata = {

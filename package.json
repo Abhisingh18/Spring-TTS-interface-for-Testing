@@ -10,7 +10,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "sync:bundle": "node scripts/sync-bundle.mjs",
-    "check:layout": "node scripts/check-layout.mjs"
+    "check:layout": "node scripts/check-layout.mjs",
+    "check:admin": "node scripts/check-admin-flow.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

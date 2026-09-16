@@ -1,5 +1,5 @@
 import { getBundle } from "@/lib/bundle";
-import { isAdmin } from "@/lib/session";
+import { isAdmin } from "@/lib/admin-auth";
 import { getStore, storeDescription } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
@@ -7,7 +7,10 @@ export const dynamic = "force-dynamic";
 /** Full submission dump: `?format=json` (default) or `?format=csv`. */
 export async function GET(request: Request): Promise<Response> {
   if (!(await isAdmin())) {
-    return Response.json({ error: "Enter the admin passcode first." }, { status: 401 });
+    return Response.json(
+      { error: { code: "ADMIN_REQUIRED", message: "Administrator sign-in required." } },
+      { status: 401 },
+    );
   }
 
   const snapshot = await getStore().snapshot();

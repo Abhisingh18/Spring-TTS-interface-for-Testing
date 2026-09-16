@@ -142,15 +142,15 @@ export function RoleChooser() {
 
         <h2 className="mt-4 text-xl font-semibold tracking-tight text-ink">Admin</h2>
         <p className="mt-1.5 text-sm leading-relaxed text-muted">
-          Open the management side directly. No sign-in and no password — everything is available
-          straight away.
+          Sign in with the administrator credential to create collections, add model columns,
+          upload samples and read everyone&rsquo;s scores.
         </p>
 
         <ul className="mt-4 space-y-1.5">
           {[
-            "See every member's ratings",
-            "Model ranking and pair-by-pair breakdown",
-            "Read all written feedback",
+            "Create collections and model columns",
+            "Upload a sample into every cell",
+            "See every member's ratings and feedback",
             "Export JSON, CSV and a printable report",
           ].map((item) => (
             <li key={item} className="flex items-center gap-2 text-[13px] text-muted">
@@ -164,10 +164,10 @@ export function RoleChooser() {
 
         <div className="mt-auto flex flex-wrap gap-2 pt-6">
           <Link
-            href="/admin"
+            href="/admin/workspace"
             className="group inline-flex items-center gap-2 rounded-xl border border-line bg-panel-solid px-5 py-3 text-sm font-semibold text-ink transition-colors hover:border-line-strong"
           >
-            Open admin
+            Sign in as admin
             <span className="transition-transform group-hover:translate-x-1" aria-hidden="true">
               →
             </span>
@@ -181,8 +181,9 @@ export function RoleChooser() {
         </div>
 
         <p className="mt-3 text-[11px] leading-relaxed text-faint">
-          Unprotected by design. Anyone with this link reaches the dashboard, so keep it within the
-          lab — or set an <code className="font-mono">ADMIN_PASSCODE</code> to require one.
+          Default credential is <code className="font-mono">admin@spring.com</code>. Change it with
+          the <code className="font-mono">ADMIN_EMAIL</code> and{" "}
+          <code className="font-mono">ADMIN_PASSWORD</code> environment variables.
         </p>
       </section>
     </div>
