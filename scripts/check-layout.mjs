@@ -29,6 +29,7 @@ const ROUTES = process.env.ONLY ? [process.env.ONLY] : [
   "/admin",
   "/data",
   "/admin/workspace",
+  "/admin/login",
 ];
 const WIDTHS = process.env.ONLY ? [390] : [390, 768, 1280, 1920];
 

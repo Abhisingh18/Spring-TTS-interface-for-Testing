@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
-import { AdminGate } from "@/components/AdminGate";
 import { CollectionManager } from "@/components/admin/CollectionManager";
 import { Badge } from "@/components/ui";
 import { isAdmin } from "@/lib/admin-auth";
@@ -16,9 +15,11 @@ export default async function ManageCollectionPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  if (!(await isAdmin())) return <AdminGate />;
-
   const { id } = await params;
+  if (!(await isAdmin())) {
+    redirect(`/admin/login?next=${encodeURIComponent(`/admin/workspace/${id}`)}`);
+  }
+
   const snapshot = await getWorkspace();
   const collection = snapshot.collections.find((entry) => entry.id === id);
   if (!collection) notFound();

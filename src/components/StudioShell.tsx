@@ -70,7 +70,7 @@ const GROUPS: Array<{ title: string; items: NavItem[] }> = [
 const [wordmarkHead, wordmarkTail] = splitWordmark(branding.name);
 
 /** Routes that render their own full-bleed chrome instead of the studio shell. */
-const BARE_ROUTES = ["/", "/start", "/admin/report"];
+const BARE_ROUTES = ["/", "/start", "/admin/login", "/admin/report"];
 
 export function StudioShell({
   pairs,

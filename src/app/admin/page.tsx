@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { AdminDashboard } from "@/components/AdminDashboard";
-import { AdminGate } from "@/components/AdminGate";
 import { getBundle } from "@/lib/bundle";
 import { isAdmin } from "@/lib/admin-auth";
 import { getStore, storeDescription } from "@/lib/storage";
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  if (!(await isAdmin())) return <AdminGate />;
+  if (!(await isAdmin())) redirect("/admin/login?next=/admin");
 
   const [snapshot, bundle] = await Promise.all([getStore().snapshot(), getBundle()]);
 

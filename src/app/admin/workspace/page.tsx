@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
-import { AdminGate } from "@/components/AdminGate";
 import { NewCollectionForm } from "@/components/admin/NewCollectionForm";
 import { SectionHeading, StatTile, Badge } from "@/components/ui";
 import { isAdmin, usingDefaultPassword, adminEmail } from "@/lib/admin-auth";
@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Workspace" };
 export const dynamic = "force-dynamic";
 
 export default async function WorkspacePage() {
-  if (!(await isAdmin())) return <AdminGate />;
+  if (!(await isAdmin())) redirect("/admin/login?next=/admin/workspace");
 
   const snapshot = await getWorkspace();
   const location = workspaceLocation();

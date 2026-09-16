@@ -43,8 +43,15 @@ async function json(path, method, body) {
 console.log("\n1. signed out — management must be closed");
 check("POST /api/v1/collections", (await json("/api/v1/collections", "POST", { name: "Sneaky" })).status, 401);
 check("GET  /api/admin/export", (await call("/api/admin/export?format=json")).status, 401);
+check("GET  /admin redirects", (await call("/admin")).status, 307);
 const gate = await call("/admin/workspace");
-check("workspace shows sign-in", (await gate.text()).includes("Administrator sign-in"), true);
+check("workspace redirects", gate.status, 307);
+check("redirect target", gate.headers.get("location"), "/admin/login?next=/admin/workspace");
+
+const loginPage = await call("/admin/login");
+const loginHtml = await loginPage.text();
+check("login page 200", loginPage.status, 200);
+check("login page has no studio sidebar", loginHtml.includes('aria-label="Studio"'), false);
 
 console.log("\n2. wrong credentials");
 check("wrong password", (await json("/api/admin/login", "POST", { email: "admin@spring.com", password: "nope" })).status, 401);
@@ -54,6 +61,10 @@ check("still closed", (await json("/api/v1/collections", "POST", { name: "Sneaky
 console.log("\n3. correct credentials");
 check("login", (await json("/api/admin/login", "POST", { email: "admin@spring.com", password: "spring-admin" })).status, 200);
 check("export now open", (await call("/api/admin/export?format=json")).status, 200);
+check("/admin now renders", (await call("/admin")).status, 200);
+const signedInLogin = await call("/admin/login");
+check("login page redirects when signed in", signedInLogin.status, 307);
+check("  onward to workspace", signedInLogin.headers.get("location"), "/admin/workspace");
 
 console.log("\n4. create a collection");
 const created = await json("/api/v1/collections", "POST", {
