@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { LandingStart } from "@/components/LandingStart";
 import { AnalyticsPreview } from "@/components/landing/Analytics";
 import { BentoGrid } from "@/components/landing/Bento";
 import { EvaluationPreview } from "@/components/landing/EvaluationPreview";
@@ -57,14 +56,13 @@ const SECURITY = [
 ];
 
 export default async function LandingPage() {
-  const { pairs, stats } = await getBundle();
+  const { stats } = await getBundle();
   const [wordmarkHead, wordmarkTail] = splitWordmark(branding.name);
-  const firstPair = pairs[0]?.slug ?? "";
 
   return (
     <div className="ses-landing -mx-4 -mt-6 px-4 pb-20 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
       {/* ---------------------------------------------------------- hero -- */}
-      <LandingNav studioHref={firstPair ? `/pairs/${firstPair}` : "/pairs"} />
+      <LandingNav studioHref="/start" />
 
       <section className="ses-grid ses-grid-fade relative -mx-4 overflow-hidden px-4 pb-24 pt-16 sm:-mx-6 sm:px-6 sm:pt-24 lg:-mx-8 lg:px-8">
         {/* Waves sit low and faint: texture under the fold, never behind the type. */}
@@ -93,7 +91,7 @@ export default async function LandingPage() {
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <Link
-              href={firstPair ? `/pairs/${firstPair}` : "/pairs"}
+              href="/start"
               className="group inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-[15px] font-semibold text-white shadow-lg transition-opacity hover:opacity-90"
               style={{ background: "var(--primary-to)" }}
             >
@@ -448,8 +446,23 @@ export default async function LandingPage() {
           <p className="mx-auto mt-4 max-w-xl text-[17px] text-muted">
             Design experiments. Run evaluations. Understand your models.
           </p>
-          <div className="mx-auto mt-8 max-w-xl">
-            <LandingStart firstPairSlug={firstPair} />
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/start"
+              className="group inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-[15px] font-semibold text-white shadow-lg transition-opacity hover:opacity-90"
+              style={{ background: "var(--primary-to)" }}
+            >
+              Open the studio
+              <span className="transition-transform group-hover:translate-x-1" aria-hidden="true">
+                →
+              </span>
+            </Link>
+            <Link
+              href="/admin"
+              className="rounded-full border border-line bg-panel-solid px-7 py-3.5 text-[15px] font-medium text-ink transition-colors hover:border-line-strong"
+            >
+              Go to admin
+            </Link>
           </div>
           <p className="tnum mt-8 font-mono text-[11px] text-faint">
             This deployment currently serves {stats.pairs} pairs · {stats.models} models ·{" "}

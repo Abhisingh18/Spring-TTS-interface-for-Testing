@@ -109,7 +109,7 @@ export function ListenerBadge() {
   if (!listener) {
     return (
       <Link
-        href="/#start"
+        href="/start"
         className="rounded-lg border border-accent/50 bg-accent-soft px-3 py-1.5 text-sm font-medium text-accent"
       >
         Sign in
