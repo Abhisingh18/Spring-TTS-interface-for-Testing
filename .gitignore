@@ -9,3 +9,7 @@ next-env.d.ts
 # data/ and public/audio/ are produced by `npm run sync:bundle` and are meant to
 # be committed — they are what the deployment serves.
 .data
+
+# Playwright
+test-results
+playwright-report

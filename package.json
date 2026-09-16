@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "sync:bundle": "node scripts/sync-bundle.mjs"
+    "sync:bundle": "node scripts/sync-bundle.mjs",
+    "check:layout": "node scripts/check-layout.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -27,6 +28,7 @@
     "@types/react-dom": "^19.1.9",
     "eslint": "^9.36.0",
     "eslint-config-next": "^15.5.4",
+    "playwright": "^1.63.0",
     "prisma": "^6.19.3",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2"

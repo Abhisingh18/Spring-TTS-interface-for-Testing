@@ -36,7 +36,7 @@ export default async function ReportPage() {
     .sort((a, b) => b.count - a.count);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-7 py-4">
+    <div className="mx-auto w-full max-w-4xl space-y-7 px-5 py-4 sm:px-8 print:px-0">
       <AutoPrint />
 
       <header className="border-b border-line pb-4">

@@ -14,7 +14,7 @@ export default async function StartPage() {
   const { stats } = await getBundle();
 
   return (
-    <div className="mx-auto max-w-4xl py-10 sm:py-16">
+    <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8 sm:py-16">
       <div className="text-center">
         <Link
           href="/"

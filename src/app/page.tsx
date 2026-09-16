@@ -60,11 +60,12 @@ export default async function LandingPage() {
   const [wordmarkHead, wordmarkTail] = splitWordmark(branding.name);
 
   return (
-    <div className="ses-landing -mx-4 -mt-6 px-4 pb-20 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+    <div className="ses-landing relative w-full overflow-x-clip">
       {/* ---------------------------------------------------------- hero -- */}
       <LandingNav studioHref="/start" />
 
-      <section className="ses-grid ses-grid-fade relative -mx-4 overflow-hidden px-4 pb-24 pt-16 sm:-mx-6 sm:px-6 sm:pt-24 lg:-mx-8 lg:px-8">
+      <section className="ses-grid ses-grid-fade relative w-full overflow-hidden pb-24 pt-16 sm:pt-24">
+        <div className="mx-auto w-full max-w-[76rem] px-5 sm:px-8">
         {/* Waves sit low and faint: texture under the fold, never behind the type. */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 opacity-60">
           <HeroCanvas showGraph={false} />
@@ -115,8 +116,10 @@ export default async function LandingPage() {
         <div className="relative mt-20">
           <EvaluationPreview />
         </div>
+        </div>
       </section>
 
+      <div className="mx-auto w-full max-w-[76rem] px-5 pb-20 sm:px-8">
       {/* -------------------------------------------------------- trust -- */}
       <Reveal>
         <section className="mt-16 border-y border-line py-7">
@@ -505,6 +508,7 @@ export default async function LandingPage() {
           © {new Date().getFullYear()} {branding.organization} · {branding.name}
         </p>
       </footer>
+      </div>
     </div>
   );
 }

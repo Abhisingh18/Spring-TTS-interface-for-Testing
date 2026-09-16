@@ -25,9 +25,9 @@ export default async function CollectionsPage() {
           <Link
             key={collection.id}
             href={`/collections/${collection.id}`}
-            className="panel lift group flex flex-col rounded-2xl p-5"
+            className="panel lift group flex min-w-0 flex-col rounded-2xl p-5"
           >
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   {collection.languageNative ? (
@@ -39,7 +39,7 @@ export default async function CollectionsPage() {
                     {collection.language}
                   </span>
                 </div>
-                <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">
+                <h2 className="mt-1 text-balance text-lg font-semibold tracking-tight text-ink">
                   {collection.name}
                 </h2>
               </div>
@@ -57,21 +57,21 @@ export default async function CollectionsPage() {
               className="mt-4 h-8 w-full opacity-70 transition-opacity group-hover:opacity-100"
             />
 
-            <dl className="mt-4 grid grid-cols-4 gap-2 border-t border-line/70 pt-3 text-[11px]">
+            <dl className="mt-4 grid grid-cols-2 gap-2 border-t border-line/70 pt-3 text-[11px] sm:grid-cols-4">
               {[
                 ["Pairs", collection.stats.pairs],
                 ["Models", collection.stats.models],
                 ["Clips", collection.stats.clips],
                 ["Minutes", Math.round(collection.stats.totalSeconds / 60)],
               ].map(([label, value]) => (
-                <div key={label as string}>
+                <div key={label as string} className="min-w-0">
                   <dt className="text-faint">{label}</dt>
                   <dd className="tnum mt-0.5 text-base font-semibold text-ink">{value}</dd>
                 </div>
               ))}
             </dl>
 
-            <div className="mt-3 flex items-center justify-between text-[11px] text-faint">
+            <div className="mt-3 flex min-w-0 items-center justify-between gap-2 text-[11px] text-faint">
               <span className="truncate">{collection.stats.corpora.join(" · ")}</span>
               <span className="shrink-0 text-accent opacity-0 transition-opacity group-hover:opacity-100">
                 Open →
