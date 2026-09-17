@@ -31,7 +31,7 @@ export default async function ManageCollectionPage({
           href="/admin/workspace"
           className="inline-flex items-center gap-1.5 text-[13px] text-muted transition-colors hover:text-ink"
         >
-          <span aria-hidden="true">←</span> Workspace
+          <span aria-hidden="true">←</span> Folders
         </Link>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <h1 className="text-3xl font-semibold tracking-tight text-ink">{collection.name}</h1>

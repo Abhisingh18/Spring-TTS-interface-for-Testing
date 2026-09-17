@@ -51,7 +51,11 @@ const MEMBER_GROUPS: Array<{ title: string; items: NavItem[] }> = [
 
 const ADMIN_GROUPS: Array<{ title: string; items: NavItem[] }> = [
   {
-    title: "Workspace",
+    title: "Manage",
+    items: [{ href: "/admin/workspace", label: "Folders", icon: "workspace", prefix: true }],
+  },
+  {
+    title: "Demo bundle",
     items: [
       { href: "/collections", label: "Collections", icon: "collections", prefix: true },
       { href: "/pairs", label: "Pairs", icon: "pairs", prefix: true },
@@ -72,10 +76,6 @@ const ADMIN_GROUPS: Array<{ title: string; items: NavItem[] }> = [
       { href: "/admin", label: "Everyone's ratings", icon: "everyone" },
       { href: "/data", label: "Bundle data", icon: "data" },
     ],
-  },
-  {
-    title: "Management",
-    items: [{ href: "/admin/workspace", label: "Workspace", icon: "workspace", prefix: true }],
   },
 ];
 

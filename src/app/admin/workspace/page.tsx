@@ -8,7 +8,7 @@ import { cx } from "@/lib/format";
 import { isAdmin, usingDefaultPassword, adminEmail } from "@/lib/admin-auth";
 import { getWorkspace, workspaceLocation } from "@/lib/workspace/store";
 
-export const metadata: Metadata = { title: "Workspace" };
+export const metadata: Metadata = { title: "Folders" };
 export const dynamic = "force-dynamic";
 
 export default async function WorkspacePage() {
@@ -52,8 +52,8 @@ export default async function WorkspacePage() {
   return (
     <div className="space-y-7">
       <SectionHeading
-        title="Workspace"
-        description="Create a collection, give it model columns, add the utterances you want compared, and upload a clip into every cell."
+        title="Folders"
+        description="Create a folder, give it model columns, add the utterances you want compared, and upload a clip into every cell."
       />
 
       {usingDefaultPassword() ? (
