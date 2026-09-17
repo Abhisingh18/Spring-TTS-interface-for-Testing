@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { ListenerBadge } from "@/components/SignIn";
@@ -118,7 +118,7 @@ export function StudioShell({
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar onOpenDrawer={() => setDrawerOpen(true)} />
+        <TopBar admin={admin === true} onOpenDrawer={() => setDrawerOpen(true)} />
         <main className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-32 pt-6 sm:px-6 lg:px-8">
           {children}
         </main>
@@ -307,7 +307,7 @@ function PaletteHint() {
   );
 }
 
-function TopBar({ onOpenDrawer }: { onOpenDrawer: () => void }) {
+function TopBar({ admin, onOpenDrawer }: { admin: boolean; onOpenDrawer: () => void }) {
   return (
     <header className="no-print sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-line bg-bg/80 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
       <button
@@ -322,10 +322,49 @@ function TopBar({ onOpenDrawer }: { onOpenDrawer: () => void }) {
       </button>
 
       <div className="ml-auto flex items-center gap-1.5">
-        <ListenerBadge />
+        {admin ? <AdminBadge /> : <ListenerBadge />}
         <ThemeToggle />
       </div>
     </header>
+  );
+}
+
+/**
+ * Shown instead of the member ListenerBadge once the admin store confirms a
+ * credentialed session — otherwise the header kept offering "Sign in" (the
+ * member flow) even while signed in as admin, which is exactly backwards.
+ */
+function AdminBadge() {
+  const router = useRouter();
+  const clearAdmin = useAdminStore((state) => state.clear);
+  const [pending, setPending] = useState(false);
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="hidden items-center gap-1.5 rounded-lg border border-accent/40 bg-accent-soft px-2.5 py-1.5 text-sm font-medium text-accent sm:flex">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+          <path d="M8 1.5 2.5 4v3.5c0 3.2 2.3 5.6 5.5 6.5 3.2-.9 5.5-3.3 5.5-6.5V4L8 1.5Z" strokeLinejoin="round" />
+        </svg>
+        Admin
+      </span>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={async () => {
+          setPending(true);
+          try {
+            await fetch("/api/admin/logout", { method: "POST" });
+          } finally {
+            clearAdmin();
+            router.push("/");
+            router.refresh();
+          }
+        }}
+        className="rounded-lg px-2 py-1.5 text-xs text-faint transition-colors hover:text-ink disabled:opacity-60"
+      >
+        {pending ? "Signing out…" : "Sign out"}
+      </button>
+    </div>
   );
 }
 

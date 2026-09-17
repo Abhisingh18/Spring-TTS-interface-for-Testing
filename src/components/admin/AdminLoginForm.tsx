@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { cx } from "@/lib/format";
+import { useAdminStore } from "@/store/admin";
 
 /** The credential form itself. The surrounding page owns the layout. */
 export function AdminLoginForm({
@@ -38,7 +39,11 @@ export function AdminLoginForm({
       });
 
       if (response.ok) {
-        // The gate is server-rendered, so the new cookie needs a fresh render.
+        // The layout's admin store fetched its answer once, at first mount —
+        // without this it keeps showing the signed-out sidebar forever, no
+        // matter what router.refresh() re-renders on the server.
+        await useAdminStore.getState().refresh();
+        // The gate is server-rendered too, so the new cookie needs a fresh render.
         router.replace(next);
         router.refresh();
         return;
