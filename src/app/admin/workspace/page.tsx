@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { NewCollectionForm } from "@/components/admin/NewCollectionForm";
 import { SectionHeading, StatTile, Badge } from "@/components/ui";
+import { cx } from "@/lib/format";
 import { isAdmin, usingDefaultPassword, adminEmail } from "@/lib/admin-auth";
 import { getWorkspace, workspaceLocation } from "@/lib/workspace/store";
 
@@ -15,6 +16,38 @@ export default async function WorkspacePage() {
 
   const snapshot = await getWorkspace();
   const location = workspaceLocation();
+
+  // Only published collections are reachable by a member, so that is the
+  // denominator "how much feedback is there to give" should use.
+  const publishedIds = new Set(
+    snapshot.collections.filter((c) => c.status === "published").map((c) => c.id),
+  );
+  const ratableCells = snapshot.samples.filter(
+    (s) => s.role === "generated" && publishedIds.has(s.collectionId),
+  ).length;
+
+  const participants = new Map<
+    string,
+    { name: string; done: number; lastActive: string }
+  >();
+  for (const rating of snapshot.ratings) {
+    if (!publishedIds.has(rating.collectionId)) continue;
+    if (rating.naturalness === null && rating.similarity === null) continue;
+    const existing = participants.get(rating.participantId);
+    if (existing) {
+      existing.done += 1;
+      if (rating.updatedAt > existing.lastActive) existing.lastActive = rating.updatedAt;
+    } else {
+      participants.set(rating.participantId, {
+        name: rating.participantName,
+        done: 1,
+        lastActive: rating.updatedAt,
+      });
+    }
+  }
+  const participantRows = [...participants.entries()]
+    .map(([id, entry]) => ({ id, ...entry }))
+    .sort((a, b) => b.done - a.done);
 
   return (
     <div className="space-y-7">
@@ -91,6 +124,72 @@ export default async function WorkspacePage() {
           })}
         </div>
       )}
+
+      <section>
+        <h2 className="mb-1 text-sm font-semibold uppercase tracking-[0.14em] text-faint">
+          Who has rated what
+        </h2>
+        <p className="mb-3 text-xs text-muted">
+          Cells scored against {ratableCells} ratable cell{ratableCells === 1 ? "" : "s"} across
+          every published collection.
+        </p>
+
+        {participantRows.length === 0 ? (
+          <p className="panel rounded-2xl px-4 py-8 text-center text-sm text-muted">
+            No one has scored anything yet.
+          </p>
+        ) : (
+          <div className="panel overflow-x-auto rounded-2xl">
+            <table className="w-full min-w-[480px] border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-line text-left text-[11px] uppercase tracking-wider text-faint">
+                  <th className="px-4 py-2.5 font-medium">Member</th>
+                  <th className="px-4 py-2.5 font-medium">Progress</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Cells</th>
+                  <th className="px-4 py-2.5 font-medium">Last active</th>
+                </tr>
+              </thead>
+              <tbody>
+                {participantRows.map((row) => {
+                  const complete = ratableCells > 0 && row.done >= ratableCells;
+                  const percent = ratableCells > 0 ? Math.min(100, (row.done / ratableCells) * 100) : 0;
+                  return (
+                    <tr key={row.id} className="border-b border-line/60 last:border-0">
+                      <td className="px-4 py-2.5 font-medium text-ink" dir="auto">
+                        {row.name}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <span className="flex items-center gap-2">
+                          <span className="h-1.5 w-28 overflow-hidden rounded-full bg-sunken">
+                            <span
+                              className={cx(
+                                "block h-full rounded-full",
+                                complete ? "bg-teal" : "bg-accent",
+                              )}
+                              style={{ width: `${percent}%` }}
+                            />
+                          </span>
+                          {complete ? (
+                            <Badge tone="teal">done</Badge>
+                          ) : (
+                            <span className="tnum text-xs text-faint">{Math.round(percent)}%</span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="tnum px-4 py-2.5 text-right text-muted">
+                        {row.done}/{ratableCells}
+                      </td>
+                      <td className="px-4 py-2.5 text-xs text-faint">
+                        {new Date(row.lastActive).toLocaleString()}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

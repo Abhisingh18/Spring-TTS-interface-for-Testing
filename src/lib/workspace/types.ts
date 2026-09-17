@@ -63,11 +63,26 @@ export interface WorkspaceSample {
   createdAt: string;
 }
 
+/** A member's score for one cell (item × model). */
+export interface WorkspaceRating {
+  id: string;
+  collectionId: string;
+  itemId: string;
+  modelId: string;
+  participantId: string;
+  participantName: string;
+  naturalness: number | null;
+  similarity: number | null;
+  note: string | null;
+  updatedAt: string;
+}
+
 export interface WorkspaceSnapshot {
   collections: WorkspaceCollection[];
   models: WorkspaceModel[];
   items: WorkspaceItem[];
   samples: WorkspaceSample[];
+  ratings: WorkspaceRating[];
 }
 
 export const EMPTY_WORKSPACE: WorkspaceSnapshot = {
@@ -75,4 +90,5 @@ export const EMPTY_WORKSPACE: WorkspaceSnapshot = {
   models: [],
   items: [],
   samples: [],
+  ratings: [],
 };

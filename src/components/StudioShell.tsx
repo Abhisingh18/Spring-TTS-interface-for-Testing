@@ -43,8 +43,8 @@ const MEMBER_GROUPS: Array<{ title: string; items: NavItem[] }> = [
   {
     title: "Listening",
     items: [
-      { href: "/dashboard", label: "My dashboard", icon: "dashboard" },
       { href: "/collections", label: "My files", icon: "collections", prefix: true },
+      { href: "/dashboard", label: "My dashboard", icon: "dashboard" },
     ],
   },
 ];

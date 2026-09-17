@@ -10,6 +10,7 @@ import {
   type WorkspaceCollection,
   type WorkspaceItem,
   type WorkspaceModel,
+  type WorkspaceRating,
   type WorkspaceSample,
   type WorkspaceSnapshot,
 } from "./types";
@@ -66,6 +67,7 @@ async function read(): Promise<WorkspaceSnapshot> {
       models: parsed.models ?? [],
       items: parsed.items ?? [],
       samples: parsed.samples ?? [],
+      ratings: parsed.ratings ?? [],
     };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return { ...EMPTY_WORKSPACE };
@@ -144,6 +146,7 @@ export async function deleteCollection(id: string): Promise<string[]> {
     snapshot.models = snapshot.models.filter((entry) => entry.collectionId !== id);
     snapshot.items = snapshot.items.filter((entry) => entry.collectionId !== id);
     snapshot.samples = snapshot.samples.filter((entry) => entry.collectionId !== id);
+    snapshot.ratings = snapshot.ratings.filter((entry) => entry.collectionId !== id);
     return keys;
   });
 
@@ -182,6 +185,7 @@ export async function deleteModel(id: string): Promise<void> {
       .map((sample) => sample.objectKey);
     snapshot.models = snapshot.models.filter((entry) => entry.id !== id);
     snapshot.samples = snapshot.samples.filter((entry) => entry.modelId !== id);
+    snapshot.ratings = snapshot.ratings.filter((entry) => entry.modelId !== id);
     return keys;
   });
   await Promise.all(removedKeys.map((key) => removeAudio(key)));
@@ -218,6 +222,7 @@ export async function deleteItem(id: string): Promise<void> {
       .map((sample) => sample.objectKey);
     snapshot.items = snapshot.items.filter((entry) => entry.id !== id);
     snapshot.samples = snapshot.samples.filter((entry) => entry.itemId !== id);
+    snapshot.ratings = snapshot.ratings.filter((entry) => entry.itemId !== id);
     return keys;
   });
   await Promise.all(removedKeys.map((key) => removeAudio(key)));
@@ -309,4 +314,48 @@ export async function deleteSample(id: string): Promise<void> {
 export async function findSample(id: string): Promise<WorkspaceSample | undefined> {
   const snapshot = await getWorkspace();
   return snapshot.samples.find((entry) => entry.id === id);
+}
+
+// ---------------------------------------------------------------- ratings --
+
+/** Upserts one member's score for one cell — unique on (itemId, modelId, participantId). */
+export function rateWorkspaceSample(input: {
+  collectionId: string;
+  itemId: string;
+  modelId: string;
+  participantId: string;
+  participantName: string;
+  naturalness: number | null;
+  similarity: number | null;
+  note: string | null;
+}): Promise<WorkspaceRating> {
+  return mutate((snapshot) => {
+    const existing = snapshot.ratings.find(
+      (entry) =>
+        entry.itemId === input.itemId &&
+        entry.modelId === input.modelId &&
+        entry.participantId === input.participantId,
+    );
+
+    const rating: WorkspaceRating = {
+      id: existing?.id ?? `wrt_${randomUUID()}`,
+      collectionId: input.collectionId,
+      itemId: input.itemId,
+      modelId: input.modelId,
+      participantId: input.participantId,
+      participantName: input.participantName,
+      naturalness: input.naturalness,
+      similarity: input.similarity,
+      note: input.note,
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (existing) {
+      snapshot.ratings = snapshot.ratings.map((entry) => (entry.id === existing.id ? rating : entry));
+    } else {
+      snapshot.ratings.push(rating);
+    }
+
+    return rating;
+  });
 }
