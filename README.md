@@ -1,6 +1,6 @@
 # Spring Lab Listening Studio
 
-A Next.js + TypeScript listening bench for the portable voice-conversion bundle
+A Next.js + TypeScript listening bench for the portable voice-conversion bundles
 (`portable_listening_bundle_16khz`): 10 Arabic source–target pairs × 10 models × 120 WAV clips,
 all at 16 kHz.
 
